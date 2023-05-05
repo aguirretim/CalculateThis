@@ -112,22 +112,6 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    private fun calculateResults(): String {
-        val digitsOperators = digitsOperators()
-        if (digitsOperators.isEmpty()) {
-            return ""
-        }
-
-
-        val timesDivision = timesDivisionCalculate(digitsOperators)
-        if (timesDivision.isEmpty()) {
-            return ""
-        }
-
-        val result = addSubtractCalculate(timesDivision)
-        return result.toString()
-
-    }
 
     private fun addSubtractCalculate(passedList: List<Any>): Float {
         var result = passedList[0] as Float
@@ -145,19 +129,127 @@ class MainActivity : AppCompatActivity() {
         return result
     }
 
+    private fun calculateResults(): String {
+        val digitsOperators = digitsOperators()
+        if (digitsOperators.isEmpty()) {
+            return ""
+        }
 
-    private fun timesDivisionCalculate(passedList: MutableList<Any>): MutableList<Any> {
-        var result = passedList.toMutableList()
-        while (result.contains("x") || result.contains("/")) {
-            val prevResult = result.toMutableList()
-            result = calcTimeDiv(result, "x")
-            if (prevResult == result) {
-                result = calcTimeDiv(result, "/")
+        val timesDivision = timesDivisionCalculate(digitsOperators)
+        if (timesDivision.isEmpty()) {
+            return ""
+        }
+
+        val result = addSubtractCalculate(timesDivision)
+        return result.toString()
+    }
+
+    private fun digitsOperators(): MutableList<Any> {
+        val workings = binding.workingsTV.text.toString()
+        val result = mutableListOf<Any>()
+        var currentNumber = ""
+
+        for (i in workings.indices) {
+            val currentChar = workings[i]
+
+            if (currentChar.isDigit() || currentChar == '.') {
+                currentNumber += currentChar
+                if (i == workings.lastIndex) {
+                    result.add(currentNumber.toFloat())
+                }
+            } else if (currentChar in listOf('+', '-', '/', 'x')) {
+                if (currentNumber.isEmpty()) {
+                    if (currentChar == '-') {
+                        currentNumber += currentChar
+                    } else {
+                        return mutableListOf()
+                    }
+                } else {
+                    result.add(currentNumber.toFloat())
+                    result.add(currentChar)
+                    currentNumber = ""
+                }
+            } else {
+                return mutableListOf()
             }
         }
         return result
     }
 
+    private fun timesDivisionCalculate(passedList: MutableList<Any>): MutableList<Any> {
+        val result = passedList.toMutableList()
+
+        while (true) {
+            val multiplicationIndex = result.indexOf('x')
+            val divisionIndex = result.indexOf('/')
+
+            if (multiplicationIndex == -1 && divisionIndex == -1) {
+                break
+            }
+
+            val operatorIndex = when {
+                multiplicationIndex == -1 -> divisionIndex
+                divisionIndex == -1 -> multiplicationIndex
+                multiplicationIndex < divisionIndex -> multiplicationIndex
+                else -> divisionIndex
+            }
+
+            val prevDigitIndex = operatorIndex - 1
+            val nextDigitIndex = operatorIndex + 1
+
+            if (prevDigitIndex < 0 || nextDigitIndex >= result.size) {
+                return mutableListOf()
+            }
+
+            val prevDigit = result[prevDigitIndex] as Float
+            val nextDigit = result[nextDigitIndex] as Float
+            val resultValue = when (result[operatorIndex]) {
+                'x' -> prevDigit * nextDigit
+                '/' -> {
+                    if (nextDigit == 0f) {
+                        return mutableListOf()
+                    }
+                    prevDigit / nextDigit
+                }
+
+                else -> 0f
+            }
+
+            result[prevDigitIndex] = resultValue
+            result.removeAt(operatorIndex)
+            result.removeAt(operatorIndex)
+        }
+
+        return result
+    }
+
+
+    private fun calculate(
+        passedList: MutableList<Any>,
+        operator: String,
+        operation: (Float, Float) -> Float
+    ): MutableList<Any>? {
+        val index = passedList.indexOf(operator)
+        if (index == -1) {
+            return null
+        }
+        val prevDigit = passedList[index - 1] as Float
+        val nextDigit = passedList[index + 1] as Float
+        val result = operation(prevDigit, nextDigit)
+        val newList = passedList.toMutableList()
+        newList[index - 1] = result
+        newList.removeAt(index)
+        newList.removeAt(index)
+        return newList
+    }
+
+    private fun multiply(a: Float, b: Float): Float {
+        return a * b
+    }
+
+    private fun divide(a: Float, b: Float): Float {
+        return a / b
+    }
 
 
     private fun calcTimeDiv(passedList: MutableList<Any>, operator: String): MutableList<Any> {
@@ -185,28 +277,10 @@ class MainActivity : AppCompatActivity() {
         return newList
     }
 
-
-    private fun digitsOperators(): MutableList<Any> {
-
-        val list = mutableListOf<Any>()
-        var currentDigit = ""
-        for (charecter in binding.workingsTV.text) {
-            if (charecter.isDigit() || charecter.toString() == (".")) {
-                currentDigit += charecter
-            } else {
-                list.add(currentDigit.toFloat())
-                currentDigit = ""
-                list.add(charecter)
-            }
-        }
-
-        if (currentDigit != "") {
-            list.add(currentDigit.toFloat())
-        }
-        return list
-    }
-
 }
+
+
+
 
 
 
