@@ -2,6 +2,9 @@
 
 A simple, clean calculator app for Android built with Kotlin.
 
+![CalculateThis running on-device](docs/screenshot.png)
+*The calculator running on an Android device — dark keypad with AC/backspace, digits, operators, and the orange equals key.*
+
 ## Features
 - Basic arithmetic: addition, subtraction, multiplication, division
 - Clear and backspace controls
